@@ -9,11 +9,13 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Pizza</title>
+<link href="index.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
 
 <h1> Meniu </h1>
 
+<a href="cosCumparaturi.jsp">Vezi comanda ta aici</a>
 
 <div class="bigSection">
 <div class="section">
@@ -52,66 +54,12 @@
 			e.printStackTrace();
 		}
  %>
- 
- 
+
+
+
+
  </div>
-
- 
- 
  </div>
- 
- 
- 
- 
- 
-
-
- <style>
- body{
- background-color: Beige;
- }
-
-form{
-border-bottom: 1px solid black;
-padding: 1px;
-float:right;
-width:100%;
-}
-input{
-float:right;
-}
-
-.bigSection{
-width:55%;
-float: left;
-margin-right:20%;
-margin-left:20%;
-}
- 
- .section{
- text-aling: center;
- padding: 20px;
- border: 1px solid black;
- }
- 
- h1{
- width: 100%;
- margin-left:0;
- border: 1px solid black;
- text-align:center;
- }
- </style>
- 
- 
- 
- 
-
- 
- 
- 
- 
- 
- 
  
  
 </body>
