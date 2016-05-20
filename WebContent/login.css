@@ -1,24 +1,65 @@
+*{
+ color: Brown; background-color: Beige;
+}
+
+a{
+	text-decoration: none;
+}
+
+
+ h1{
+ width: 100%;
+ margin-left:0;
+ border: 1px solid black;
+ text-align:center;
+ }
+
 body{
 	background-color: Beige;
-	color: Black; 
+	color: Brown; 
 	text-align: center;
-	padding: 20px;
 }
 
-input{
-	width: 200px;
-	float: right;   
-	margin-right: 60%;
-	padding: 5px;
+section{
+	border: 1px solid Black;
+	margin-top: 50px;
+	margin-right: 30%;
+	margin-left: 30%;
+	text-align: center;
+	width:40%;
+	height: 100%;
 }
+input{
+	width: 200px;  
+	border: 1px solid Black;
+	padding: 3px;
+	margin:10px;
+}
+
+
 
 p{	
-	margin-left: 40%;
-	text-align: left;
-}
-
-input[type=submit] {
+	color: Brown;
 	float:right;
-	margin-right: 36%;
+	text-align: right;
 }
 
+input[type=submit]{
+	margin:0;
+	border:0;
+
+}
+
+
+footer{
+	margin-top:180px;
+	padding-bottom: 20px;
+	padding-top: 50px;
+	height: 100%; 
+	width: 100%;
+	text-align: center;
+	background-color: Brown;
+	color: Beige;
+	font-variant: small-caps;
+	border-top: 1px solid Black;
+}
