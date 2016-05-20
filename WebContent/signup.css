@@ -1,25 +1,13 @@
-*{
- color: Brown; background-color: Beige;
-}
+* { color: Brown; background-color: Beige; }
+a { text-decoration: none; }
 
-a{
-	text-decoration: none;
-}
-
-
- h1{
- 	width: 100%;
- 	margin-left:0;
- 	border: 1px solid black;
- 	text-align:center;
- }
+h1 { width: 100%; margin-left:0; border: 1px solid black; text-align:center; }
 
 body{
 	background-color: Beige;
 	color: Brown; 
 	text-align: center;
 }
-
 section{
 	border: 1px solid Black;
 	margin-top: 50px;
@@ -30,7 +18,8 @@ section{
 	height: 100%;
 	float:left;
 	margin-bottom: 10%;
-}  
+} 
+
 input{
 	width: 200px;
 	float: right;
@@ -38,17 +27,10 @@ input{
 	border: 1px solid Black;
 	padding:3px; 
 }
-
-p{	
-	margin-left: 20%;
-	text-align: left;
-}
-
 input[type=date] {
 	padding-top: 2px;
 	padding-bottom: 2px;
 }
-
 input[type=submit] {
 	clear: both;
 	font-size: 15px;
@@ -58,6 +40,7 @@ input[type=submit] {
 	border: 0;
 }
 
+p { margin-left: 20%; text-align: left; }
 
 footer{
 	padding-bottom: 50px;
@@ -65,12 +48,12 @@ footer{
 	margin-left: 0;
 	margin-right: 0;
 	margin-bottom: 0;
-	margin-top: 60%;
-	height: 100%; 
+	margin-top: 800px;
+	height: 100px; 
 	width: 100%;
 	text-align: center;
 	background-color: Brown;
 	color: Beige;
 	font-variant: small-caps;
-	border-top: 1px solid Black;
+	border: 1px solid Black;
 }

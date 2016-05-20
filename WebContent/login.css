@@ -1,25 +1,12 @@
-*{
- color: Brown; background-color: Beige;
-}
-
-a{
-	text-decoration: none;
-}
-
-
- h1{
- width: 100%;
- margin-left:0;
- border: 1px solid black;
- text-align:center;
- }
+* { color: Brown; background-color: Beige; }
+a { text-decoration: none; }
+h1{ width: 100%; margin-left:0; border: 1px solid black; text-align:center; }
 
 body{
 	background-color: Beige;
 	color: Brown; 
 	text-align: center;
 }
-
 section{
 	border: 1px solid Black;
 	margin-top: 50px;
@@ -28,38 +15,20 @@ section{
 	text-align: center;
 	width:40%;
 	height: 100%;
-}
-input{
-	width: 200px;  
-	border: 1px solid Black;
-	padding: 3px;
-	margin:10px;
-}
+} 
+p { color: Brown; float:right; text-align: right; }
 
-
-
-p{	
-	color: Brown;
-	float:right;
-	text-align: right;
-}
-
-input[type=submit]{
-	margin:0;
-	border:0;
-
-}
-
+input{ width: 200px;  border: 1px solid Black; padding: 3px; margin:10px; }
+input[type=submit] { margin:0; border:0; }
 
 footer{
-	margin-top:180px;
-	padding-bottom: 20px;
-	padding-top: 50px;
-	height: 100%; 
+	margin-top:200px;
+	padding-top: 70px;
+	padding-bottom: 0px; 
 	width: 100%;
 	text-align: center;
 	background-color: Brown;
 	color: Beige;
 	font-variant: small-caps;
-	border-top: 1px solid Black;
+	border: 1px solid Black;
 }
