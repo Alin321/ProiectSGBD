@@ -15,6 +15,7 @@
 	Connection c = null;
 		try {
 			c = DBUtil.getConnection();
+			// deci aici faci interogarile pt baza de date dupa modelul asta mkay?
 			String sql = "select * from pizza";
 			Statement stmt = c.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
@@ -33,7 +34,8 @@
 					String numeIngredient = innerRs.getString(1);
 					out.print(numeIngredient+" ");
 				}
-				out.println("<br>");
+				out.print("<br>");
+				out.print("<br>");
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
