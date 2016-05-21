@@ -2,6 +2,7 @@
 <%@page import="java.sql.Statement"%>
 <%@page import="proiect.sgbd.utildb.DBUtil"%>
 <%@page import="java.sql.Connection"%>
+<%@page import="proiect.sgbd.entities.Cart"%>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
@@ -15,18 +16,24 @@
 
 <h1> Meniu </h1>
 
-<a href="cosCumparaturi.jsp">Vezi comanda ta aici</a>
-
 <div class="bigSection">
+
 <div class="section">
+Bine ai venit, <%=session.getAttribute("NUME") %> <%=session.getAttribute("PRENUME") %> ! <br>
+<%
+	String zi = String.valueOf(session.getAttribute("NASTERE"));
+	if(zi.equalsIgnoreCase("da")){
+		out.println("La multi ani! Fiindca azi e ziua ta la orice comanda primesti un tort gratuit! <br>");
+	}
+ %>
 <%
 	Connection c = null;
 		try {
 			c = DBUtil.getConnection();
-			// deci aici faci interogarile pt baza de date dupa modelul asta mkay?
 			String sql = "select * from pizza";
 			Statement stmt = c.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
+			out.println("<FORM NAME=\"form1\"METHOD=\"POST\" action=\"cosCumparaturi.jsp\">");
 			while (rs.next()) {
 				int idPizza = rs.getInt("id");
 				int pret = rs.getInt("pret");
@@ -45,10 +52,13 @@
 					out.print(numeIngredient+" ");
 				}
 					
-				out.print("<FORM NAME=\"form1\"METHOD=\"POST\"> <input type=\"button\" VALUE=\"Adauga in cos\" ONCLICK=\"functieButon()\"> </Form>");
+				out.print("<input  type=\"checkbox\" name=\"pizza\" value=\""+idPizza+"\"> ");
 				out.print("<br>");
 				out.print("<br>");
 			}
+			out.println();
+			out.println("<input type=\"submit\" value=\"Mergi Catre Cos\">");
+			out.println("</form>");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

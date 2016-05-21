@@ -173,7 +173,6 @@ CREATE TABLE bon ( ID NUMBER(5),
                     data_creare DATE,
                     id_pizza NUMBER(5),
                     pret NUMBER(5,2),
-                    primary key(id),
                     foreign key(id_pizza) references pizza(id))
 
 /
@@ -184,8 +183,7 @@ CREATE TABLE vanzari (ID NUMBER(5),
                       data_tranzactie DATE,
                       total NUMBER(10,2),
                       primary key(id),
-                      foreign key(id_client) references client(id),
-                      foreign key(id_bon) references bon(id))
+                      foreign key(id_client) references client(id))
                       
 /
 
@@ -200,6 +198,8 @@ create or replace package exceptii as
 	ingredient_inexistent EXCEPTION;
 	email_invalid EXCEPTION;
 	bon_inexistent EXCEPTION;
+	parola_gresita EXCEPTION;
+	parolele_nu_se_potrivesc EXCEPTION;
 end exceptii;
 /
 
@@ -211,6 +211,8 @@ create or replace package BODY exceptii as
 	ingredient_inexistent EXCEPTION;
 	email_invalid EXCEPTION;
 	bon_inexistent EXCEPTION;
+	parola_gresita EXCEPTION;
+	parolele_nu_se_potrivesc EXCEPTION;
 	PRAGMA EXCEPTION_INIT(client_deja_existent, -20001);
 	PRAGMA EXCEPTION_INIT(parola_invalida, -20002);
 	PRAGMA EXCEPTION_INIT(client_inexistent, -20003);
@@ -218,6 +220,8 @@ create or replace package BODY exceptii as
 	PRAGMA EXCEPTION_INIT(ingredient_inexistent, -20005);
 	PRAGMA EXCEPTION_INIT(email_invalid, -20006);
 	PRAGMA EXCEPTION_INIT(bon_inexistent, -20007);
+	PRAGMA EXCEPTION_INIT(parola_gresita, -20008);
+	PRAGMA EXCEPTION_INIT(parolele_nu_se_potrivesc, -20009);
 end exceptii;
 /
 --`````````````````````````````END EXCEPTION PACKAGE``````````````````````````````````````
@@ -226,6 +230,15 @@ end exceptii;
 create or replace package application_procedures as
 	PROCEDURE actualizare_sold_card(p_id_client in NUMBER, p_total in NUMBER);
 	PROCEDURE insereaza_combinatii_pizza;
+	PROCEDURE login(p_email in VARCHAR2, p_parola in VARCHAR2);
+	PROCEDURE inregistrare(p_nume in VARCHAR2, p_prenume in VARCHAR2, p_email in VARCHAR2, p_parola in VARCHAR2, p_confirmare_parola in VARCHAR2, p_data_nastere in DATE, 
+							p_telefon in VARCHAR2, p_strada in VARCHAR2, p_numar in NUMBER,p_bloc in VARCHAR2,p_scara in VARCHAR2,p_etaj in NUMBER, p_apartament in NUMBER);
+	PROCEDURE calculeaza_total_bon(p_id_bon in NUMBER, p_total out NUMBER);
+	PROCEDURE verifica_zi_nastere(p_id_client in NUMBER, p_raspuns out VARCHAR2);
+	PROCEDURE adauga_puncte_card(p_email in VARCHAR2, p_id_bon in NUMBER);
+	PROCEDURE foloseste_puncte(p_email in VARCHAR2, p_id_bon in NUMBER);
+	PROCEDURE adresa_clientului(p_email in VARCHAR2, p_adresa out VARCHAR2);
+	PROCEDURE numar_puncte_card(p_email in VARCHAR2, p_sold out NUMBER);
 end application_procedures;
 /
 create or replace package body application_procedures as
@@ -249,6 +262,147 @@ create or replace package body application_procedures as
 			end loop;
 		end loop;
 	END;
+
+	PROCEDURE login(p_email in VARCHAR2, p_parola in VARCHAR2) is
+		nr_email NUMBER;
+		nr_clienti NUMBER;
+	BEGIN
+		select count(*) into nr_email from client where email=p_email;
+
+		if (nr_email = 0) THEN
+			raise exceptii.client_inexistent;
+		end if;
+
+		select count(*) into nr_clienti from client where p_parola=parola and email=p_email;
+
+		if (nr_clienti = 0) then
+			raise exceptii.parola_gresita;
+		end if;
+	EXCEPTION
+		WHEN exceptii.client_inexistent THEN
+			raise_application_error(-20003, 'Nu exista niciun utilizator cu acest email!');
+		WHEN exceptii.parola_gresita THEN
+			raise_application_error(-20008, 'Email/parola gresite!');
+	END;
+
+	PROCEDURE inregistrare(p_nume in VARCHAR2, p_prenume in VARCHAR2, p_email in VARCHAR2, p_parola in VARCHAR2, p_confirmare_parola in VARCHAR2, p_data_nastere in DATE, 
+							p_telefon in VARCHAR2, p_strada in VARCHAR2, p_numar in NUMBER,p_bloc in VARCHAR2,p_scara in VARCHAR2,p_etaj in NUMBER, p_apartament in NUMBER) is 
+		nr_email NUMBER;
+		v_id_client NUMBER;
+	BEGIN
+		select count(*) into nr_email from client where email=p_email;
+
+		if(nr_email > 0) then
+			raise exceptii.client_deja_existent;
+		end if;
+
+		if(p_parola != p_confirmare_parola) then
+			raise exceptii.parolele_nu_se_potrivesc;
+		end if;
+
+		table_inserts.insert_into_client(p_nume,p_prenume,p_email,p_parola,p_telefon);
+
+		select id into v_id_client from client where email = p_email;
+
+		table_inserts.insert_into_adresa(p_strada,p_numar,p_bloc,p_scara,p_etaj,p_apartament,v_id_client);
+		table_inserts.insert_into_card(p_data_nastere,v_id_client);
+
+	EXCEPTION
+		WHEN exceptii.client_deja_existent THEN
+			raise_application_error(-20001, 'Adresa de email a fost deja folosita!');
+		WHEN exceptii.parolele_nu_se_potrivesc THEN
+			raise_application_error(-20009, 'Parolele nu se potrivesc !');
+	END;
+
+	PROCEDURE calculeaza_total_bon(p_id_bon in NUMBER, p_total out NUMBER) is
+	BEGIN
+		select sum(pret) into p_total from bon where id = p_id_bon;
+	END;
+
+	PROCEDURE verifica_zi_nastere(p_id_client in NUMBER, p_raspuns out VARCHAR2) is
+		v_data_nastere card.data_nastere%TYPE;
+		zi_data_nastere NUMBER;
+		luna_data_nastere NUMBER;
+		zi_curenta NUMBER;
+		luna_curenta NUMBER;
+	BEGIN
+		select data_nastere into v_data_nastere from card where id_client = p_id_client;
+
+		select extract(day FROM v_data_nastere) into zi_data_nastere from dual;
+		select extract(month FROM v_data_nastere) into luna_data_nastere from dual;
+
+		select extract(day FROM sysdate) into zi_curenta from dual;
+		select extract(month FROM sysdate) into luna_curenta from dual;
+
+		if (zi_data_nastere = zi_curenta and luna_data_nastere = luna_curenta) then
+			p_raspuns := 'da';
+		else 
+			p_raspuns := 'nu';
+		end if;
+	END;
+
+	PROCEDURE adauga_puncte_card(p_email in VARCHAR2, p_id_bon in NUMBER) is 
+		v_total_bon NUMBER;
+		v_id_client NUMBER;
+		sold_final NUMBER;
+	BEGIN
+		select sum(pret) into v_total_bon from bon where p_id_bon = id;
+		select id into v_id_client from client where email=p_email;
+
+		sold_final := v_total_bon/10;
+
+		actualizare_sold_card(v_id_client,sold_final);
+
+	END;
+
+	PROCEDURE foloseste_puncte(p_email in VARCHAR2, p_id_bon in NUMBER) is
+		v_total_bon NUMBER;
+		v_sold NUMBER;
+		v_id_client NUMBER;
+		diferenta NUMBER;
+	BEGIN
+		select sum(pret) into v_total_bon from bon where p_id_bon = id;
+		select id into v_id_client from client where email=p_email;
+		select sold into v_sold from card where id_client = v_id_client;
+
+		diferenta := v_sold - v_total_bon;
+
+		if (diferenta > 0) then
+			update card set sold = diferenta where id_client = v_id_client;
+		else 
+			update card set sold = 0 where id_client = v_id_client;
+		end if;
+
+		TABLE_INSERTS.INSERT_INTO_VANZARI(v_id_client,p_id_bon);
+	END;
+
+	PROCEDURE adresa_clientului(p_email in VARCHAR2, p_adresa out VARCHAR2) is
+		v_id_client NUMBER;
+		v_strada VARCHAR2(100);
+		v_numar NUMBER;
+		v_bloc VARCHAR2(100);
+		v_scara VARCHAR2(100);
+		v_etaj NUMBER;
+		v_apartament NUMBER;
+	BEGIN
+		select id into v_id_client from client where email=p_email;
+		p_adresa := '';
+		
+		select strada,numar,bloc,scara,etaj,apartament into v_strada,v_numar,v_bloc,v_scara,v_etaj,v_apartament from adresa where id_client = v_id_client;
+		p_adresa := p_adresa || 'Strada ' || v_strada || ' ';
+		p_adresa := p_adresa || 'numar ' || v_numar || ' ';
+		p_adresa := p_adresa || 'bloc ' || v_bloc || ' ';
+		p_adresa := p_adresa || 'scara ' || v_scara || ' ';
+		p_adresa := p_adresa || 'etaj ' || v_etaj || ' ';
+		p_adresa := p_adresa || 'apartament ' || v_apartament || ' ';
+	END;
+
+	PROCEDURE numar_puncte_card(p_email in VARCHAR2, p_sold out NUMBER) is
+		v_id_client NUMBER;
+	BEGIN
+		select id into v_id_client from client where email=p_email;
+		select sold into p_sold from card where id_client = v_id_client;
+	END;	
 end application_procedures;
 /
 --`````````````````````````````END APPLICATION PROCEDURES`````````````````````````````````
@@ -306,7 +460,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.client_deja_existent THEN
 			raise_application_error(-20001, 'Adresa de email este deja inregistrata in baza noastra de date');
 		WHEN OTHERS THEN
-          raise_application_error( -20999, 'Ceva nu a mers bine!');
+          raise_application_error( -20999, 'Ceva nu a mers bine! INSERT CLIENT');
 	END insert_into_client;
 
 	PROCEDURE insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2) is
@@ -333,7 +487,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.client_deja_existent THEN
 			raise_application_error(-20001, 'Adresa de email este deja inregistrata in baza noastra de date');
 		WHEN OTHERS THEN
-          raise_application_error( -20999, 'Ceva nu a mers bine!');
+          raise_application_error( -20999, 'Ceva nu a mers bine! INSERT CLIENT');
 	END insert_into_client;
 
 	PROCEDURE insert_into_card(p_data_nastere in DATE, p_id_client in NUMBER, p_sold in NUMBER) is
@@ -345,7 +499,7 @@ create or replace package body table_inserts as
 		IF (nr_id_client = 1) THEN
 			select nvl(max(id),0) into new_id from card;
 			new_id := new_id + 1;
-			insert into card(id,id_client,sold) values (new_id,p_id_client,p_sold);
+			insert into card(id,id_client,data_nastere,sold) values (new_id,p_id_client,p_data_nastere,p_sold);
 		ELSE 
 			raise exceptii.client_inexistent;
 		END IF;
@@ -353,7 +507,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.client_inexistent THEN
 			raise_application_error(-20003, 'Clientul cu acest id nu exista in baza de date!');
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT CARD');
 	END;
 
 	PROCEDURE insert_into_card(p_data_nastere in DATE, p_id_client in NUMBER) is
@@ -365,7 +519,7 @@ create or replace package body table_inserts as
 		IF (nr_id_client = 1) THEN
 			select nvl(max(id),0) into new_id from card;
 			new_id := new_id + 1;
-			insert into card(id,id_client,sold) values (new_id,p_id_client,0);
+			insert into card(id,id_client,data_nastere,sold) values (new_id,p_id_client,p_data_nastere,0);
 		ELSE 
 			raise exceptii.client_inexistent;
 		END IF;
@@ -373,7 +527,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.client_inexistent THEN
 			raise_application_error(-20003, 'Clientul cu acest id nu exista in baza de date!');
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT CARD');
 	END;
 
 	PROCEDURE insert_into_adresa(p_strada in VARCHAR2, p_numar in NUMBER, p_bloc in VARCHAR2, p_scara in VARCHAR2, p_etaj in Number, p_apartament in NUMBER, p_id_client NUMBER) is
@@ -393,7 +547,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.client_inexistent THEN
 			raise_application_error(-20003, 'Clientul cu acest id nu exista in baza de date!');
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT ADRESA');
 	END;
 
 	PROCEDURE insert_into_adresa(p_strada in VARCHAR2, p_numar in NUMBER, p_id_client NUMBER) is
@@ -413,7 +567,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.client_inexistent THEN
 			raise_application_error(-20003, 'Clientul cu acest id nu exista in baza de date!');
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT ADRESA');
 	END;
 
 	PROCEDURE insert_into_pizza (p_nume in varchar2, p_pret in NUMBER, p_tip in varchar2, p_dimensiune in varchar2) is
@@ -426,7 +580,7 @@ create or replace package body table_inserts as
     	insert into pizza(id,nume,pret,tip,dimensiune) values (new_id,p_nume,p_pret,p_tip,p_dimensiune);
 	EXCEPTION
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT PIZZA');
 	END;
 
 	PROCEDURE insert_into_ingrediente(p_nume in varchar2) is
@@ -441,7 +595,7 @@ create or replace package body table_inserts as
     	insert into ingrediente(id,nume,pret_furnizor) values (new_id,p_nume,n);
 	EXCEPTION
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT INGREDIENTE');
 	END;
 
 	PROCEDURE insert_into_ingrediente_pizza(p_id_pizza in NUMBER, p_id_ingredient in NUMBER) is
@@ -466,7 +620,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.ingredient_inexistent THEN
 			raise_application_error(-20005,'Ingredientul cu acest id nu exista in baza de date');
 		WHEN OTHERS THEN
-			raise_application_error(-20999,'Ceva nu a mers bine');
+			raise_application_error(-20999,'Ceva nu a mers bine! INSERT INGREDIENTE_PIZZA');
 	END;
 
 	procedure insert_into_bon(p_id in NUMBER, p_data_creare in DATE, p_id_pizza in NUMBER) is 
@@ -485,7 +639,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.pizza_inexistenta THEN
 			raise_application_error(-20004,'Pizza cu acest id nu exista in baza de date');
 		WHEN OTHERS THEN
-			raise_application_error(-20999,'Ceva nu a mers bine');
+			raise_application_error(-20999,'Ceva nu a mers bine! INSERT BON');
 	END;	
 
 	procedure insert_into_vanzari(p_id_client in NUMBER, p_id_bon in NUMBER) is
@@ -494,6 +648,7 @@ create or replace package body table_inserts as
 		nr_id_bon NUMBER;
 		v_data_tranzactie DATE;
 		new_id vanzari.id%TYPE;
+		v_email client.email%TYPE;
 	BEGIN
 		select count(*) into nr_id_client from client where id = p_id_client;
 
@@ -507,16 +662,18 @@ create or replace package body table_inserts as
 			raise exceptii.bon_inexistent;
 		END IF;
 
-		select data_creare into v_data_tranzactie from bon where id = p_id_bon;
+		select data_creare into v_data_tranzactie from bon where id = p_id_bon and rownum = 1;
 		select sum(pret) into v_total from bon where id=p_id_bon;
 		select nvl(max(id),0) into new_id from vanzari;
-
+		new_id := new_id + 1;
+		
 		insert into vanzari(id, id_client, id_bon, data_tranzactie, total) values (new_id, p_id_client, p_id_bon, v_data_tranzactie, v_total);
 
 		select count(*) into nr_id_client from card where id_client = p_id_client;
 
 		IF (nr_id_client > 0) THEN
-			application_procedures.actualizare_sold_card(p_id_client,v_total);
+			select email into v_email from client where id = p_id_client;
+			application_procedures.adauga_puncte_card(v_email,p_id_bon);
 		END IF;
 	EXCEPTION
 		WHEN exceptii.client_inexistent THEN
@@ -524,7 +681,7 @@ create or replace package body table_inserts as
 		WHEN exceptii.bon_inexistent THEN
 			raise_application_error(-20007, 'Nu exista bonul cu acest id!');
 		WHEN OTHERS THEN
-			raise_application_error(-20999, 'Ceva nu a mers bine!');
+			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT VANZARI');
 	END;
 
 
@@ -579,10 +736,22 @@ BEGIN
 	APPLICATION_PROCEDURES.INSEREAZA_COMBINATII_PIZZA();
 
 	-- Insert clients p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2, p_telefon in varchar2
-	TABLE_INSERTS.INSERT_INTO_CLIENT('','','','','');
+	TABLE_INSERTS.INSERT_INTO_CLIENT('Cuzuc','Alin','alincuzuc@yahoo.com','Alin123456','0741333252');
+  TABLE_INSERTS.INSERT_INTO_CARD(sysdate,1,50);
+  TABLE_INSERTS.INSERT_INTO_ADRESA('Cerna',1,'A31','A',4,1,1);
+  
 EXCEPTION
   WHEN OTHERS THEN
-    NULL;
+    raise_application_error(-20999,'EROARE');
 END;
 /
 --```````````````````````````````END POPULATE TABLES```````````````````````````````````````
+declare
+v_text VARCHAR2(100);
+begin
+APPLICATION_PROCEDURES.VERIFICA_ZI_NASTERE(1,v_text);
+dbms_output.put_line(v_text);
+end;
+/
+commit;
+/
