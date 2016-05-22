@@ -408,6 +408,9 @@ end application_procedures;
 --`````````````````````````````END APPLICATION PROCEDURES`````````````````````````````````
 -- ``````````````````````````` BEGIN INSERT DATA PROCEDURES``````````````````````````````
 create or replace package table_inserts as
+
+  procedure intro_nume_prenume;
+
   procedure insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2, p_telefon in varchar2);
   procedure insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2);
 
@@ -426,10 +429,71 @@ create or replace package table_inserts as
   procedure insert_into_bon(p_id in NUMBER,p_data_creare in DATE, p_id_pizza in NUMBER);
 
   procedure insert_into_vanzari(p_id_client in NUMBER, p_id_bon in NUMBER);
+  
 end table_inserts;
 /
 
 create or replace package body table_inserts as
+
+  CREATE OR REPLACE PROCEDURE editare(p_nume IN OUT VARCHAR2) AS
+    v_contor INTEGER;
+    v_aux_sir VARCHAR2(20):='';
+  BEGIN
+    FOR v_contor IN 1..length(p_nume) LOOP
+        IF(v_contor = 1)
+        THEN
+           v_aux_sir := v_aux_sir || UPPER(SUBSTR(p_nume,v_contor,1));
+        ELSE
+           v_aux_sir := v_aux_sir || LOWER(SUBSTR(p_nume,v_contor,1));
+        END IF;
+    END LOOP;
+    p_nume:=v_aux_sir;
+  END editare;
+
+  CREATE OR REPLACE PROCEDURE generare_numar_de_telefon( p_numar_telefon IN OUT VARCHAR2) AS  
+  BEGIN
+    p_numar_telefon:='07';
+    FOR i IN 1..8 LOOP
+      p_numar_telefon := p_numar_telefon || TRUNC(DBMS_RANDOM.VALUE(1,10));
+    END LOOP;
+  END generare_numar_telefon;
+
+  CREATE OR REPLACE PROCEDURE intro_nume_prenume AS
+  v_i INTEGER:=0;
+  v_j INTEGER:=0;
+  v_numar_linii NUMBER:=2;
+  v_nume varchar2(20):='';
+  v_prenume varchar2(20):='';
+  v_numar_telefon VARCHAR2(10):='';
+  v_email VARCHAR2(100):='';
+  v_parola VARCHAR2(50):='';
+  BEGIN
+    FOR v_contor_nume IN (SELECT n FROM nume) LOOP
+      FOR v_contor_prenume IN (SELECT p FROM prenume) LOOP
+        IF (v_numar_linii<2001) THEN 
+          v_prenume:=v_contor_prenume.p;
+          v_nume:=v_contor_nume.n;
+          generare_numar_de_telefon(v_numar_telefon);
+          editare(v_nume);
+          editare(v_prenume);
+          v_email:= LOWER(v_nume) || LOWER(v_prenume) || '@gamil.com';
+          v_parola:= v_prenume || '123';
+          INSERT INTO client(ID,Nume,Prenume,Email,Parola,Telefon) 
+            VALUES(v_numar_linii, 
+                    v_nume,
+                    v_prenume,        
+                    v_email, 
+                    v_parola, 
+                    v_numar_telefon 
+                  );
+          v_numar_linii:=v_numar_linii+1;
+        END IF;
+      END LOOP;
+    END LOOP;
+  END intro_nume_prenume;
+
+
+
 	PROCEDURE insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2, p_telefon in varchar2) is
 		new_id client.id%TYPE;
 		nr_of_emails number;
@@ -745,6 +809,7 @@ EXCEPTION
     raise_application_error(-20999,'EROARE');
 END;
 /
+
 --```````````````````````````````END POPULATE TABLES```````````````````````````````````````
 declare
 v_text VARCHAR2(100);
@@ -755,3 +820,5 @@ end;
 /
 commit;
 /
+
+select * from client;
