@@ -435,7 +435,7 @@ end table_inserts;
 
 create or replace package body table_inserts as
 
-  CREATE OR REPLACE PROCEDURE editare(p_nume IN OUT VARCHAR2) AS
+  PROCEDURE editare(p_nume IN OUT VARCHAR2) AS
     v_contor INTEGER;
     v_aux_sir VARCHAR2(20):='';
   BEGIN
@@ -450,15 +450,15 @@ create or replace package body table_inserts as
     p_nume:=v_aux_sir;
   END editare;
 
-  CREATE OR REPLACE PROCEDURE generare_numar_de_telefon( p_numar_telefon IN OUT VARCHAR2) AS  
+  PROCEDURE generare_numar_de_telefon( p_numar_telefon IN OUT VARCHAR2) AS  
   BEGIN
     p_numar_telefon:='07';
     FOR i IN 1..8 LOOP
       p_numar_telefon := p_numar_telefon || TRUNC(DBMS_RANDOM.VALUE(1,10));
     END LOOP;
-  END generare_numar_telefon;
+  END generare_numar_de_telefon;
 
-  CREATE OR REPLACE PROCEDURE intro_nume_prenume AS
+  PROCEDURE intro_nume_prenume AS
   v_i INTEGER:=0;
   v_j INTEGER:=0;
   v_numar_linii NUMBER:=2;
@@ -804,6 +804,8 @@ BEGIN
   TABLE_INSERTS.INSERT_INTO_CARD(sysdate,1,50);
   TABLE_INSERTS.INSERT_INTO_ADRESA('Cerna',1,'A31','A',4,1,1);
   
+  TABLE_INSERTS.intro_nume_prenume();
+  
 EXCEPTION
   WHEN OTHERS THEN
     raise_application_error(-20999,'EROARE');
@@ -820,5 +822,3 @@ end;
 /
 commit;
 /
-
-select * from client;
