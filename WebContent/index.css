@@ -1,8 +1,6 @@
 @CHARSET "ISO-8859-1";
 
 
-
-
 body{
 background-color: Beige;
 color: Brown;
@@ -16,7 +14,9 @@ a{
 	text-decoration: none;
 }
 
-
+label{
+	float: right;
+}
 
 form{
 border-bottom: 1px solid black;
@@ -45,10 +45,9 @@ margin-right:20%;
 margin-left:20%;
 }
  
- .section{
- text-aling: center;
+ .section {
  padding: 20px;
- border: 1px solid black;
+margin-bottom:200px; 
  }
  
  h1{

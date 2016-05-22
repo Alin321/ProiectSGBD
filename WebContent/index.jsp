@@ -24,9 +24,9 @@ Bine ai venit, <%=session.getAttribute("NUME") %> <%=session.getAttribute("PRENU
 	String zi = String.valueOf(session.getAttribute("NASTERE"));
 	if(zi.equalsIgnoreCase("da")){
 		out.println("La multi ani! Fiindca azi e ziua ta la orice comanda primesti un tort gratuit! <br>");
+	
 	}
- %>
-<%
+	
 	Connection c = null;
 		try {
 			c = DBUtil.getConnection();

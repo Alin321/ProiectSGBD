@@ -6,7 +6,6 @@
 <%@page import="java.sql.Connection"%>
 <%@page import="java.util.List"%>
 <%@page import="java.util.ArrayList"%>
-<%@page import="proiect.sgbd.entities.Cart"%>
 <%@page import="java.sql.CallableStatement"%>
 <%@page import="java.util.Calendar"%>
 <%@page import="java.sql.SQLException"%>
