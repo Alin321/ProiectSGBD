@@ -134,7 +134,7 @@ CREATE TABLE card ( ID NUMBER(5),
 /
 
 CREATE TABLE adresa ( ID NUMBER(5),
-                      strada VARCHAR2(15),
+                      strada VARCHAR2(50),
                       numar NUMBER(5),
                       bloc VARCHAR2(5),
                       scara VARCHAR2(5),
@@ -409,7 +409,7 @@ end application_procedures;
 -- ``````````````````````````` BEGIN INSERT DATA PROCEDURES``````````````````````````````
 create or replace package table_inserts as
 
-  procedure intro_nume_prenume;
+  procedure POPULATE_DATABASE;
 
   procedure insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2, p_telefon in varchar2);
   procedure insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2);
@@ -434,65 +434,6 @@ end table_inserts;
 /
 
 create or replace package body table_inserts as
-
-  PROCEDURE editare(p_nume IN OUT VARCHAR2) AS
-    v_contor INTEGER;
-    v_aux_sir VARCHAR2(20):='';
-  BEGIN
-    FOR v_contor IN 1..length(p_nume) LOOP
-        IF(v_contor = 1)
-        THEN
-           v_aux_sir := v_aux_sir || UPPER(SUBSTR(p_nume,v_contor,1));
-        ELSE
-           v_aux_sir := v_aux_sir || LOWER(SUBSTR(p_nume,v_contor,1));
-        END IF;
-    END LOOP;
-    p_nume:=v_aux_sir;
-  END editare;
-
-  PROCEDURE generare_numar_de_telefon( p_numar_telefon IN OUT VARCHAR2) AS  
-  BEGIN
-    p_numar_telefon:='07';
-    FOR i IN 1..8 LOOP
-      p_numar_telefon := p_numar_telefon || TRUNC(DBMS_RANDOM.VALUE(1,10));
-    END LOOP;
-  END generare_numar_de_telefon;
-
-  PROCEDURE intro_nume_prenume AS
-  v_i INTEGER:=0;
-  v_j INTEGER:=0;
-  v_numar_linii NUMBER:=2;
-  v_nume varchar2(20):='';
-  v_prenume varchar2(20):='';
-  v_numar_telefon VARCHAR2(10):='';
-  v_email VARCHAR2(100):='';
-  v_parola VARCHAR2(50):='';
-  BEGIN
-    FOR v_contor_nume IN (SELECT n FROM nume) LOOP
-      FOR v_contor_prenume IN (SELECT p FROM prenume) LOOP
-        IF (v_numar_linii<2001) THEN 
-          v_prenume:=v_contor_prenume.p;
-          v_nume:=v_contor_nume.n;
-          generare_numar_de_telefon(v_numar_telefon);
-          editare(v_nume);
-          editare(v_prenume);
-          v_email:= LOWER(v_nume) || LOWER(v_prenume) || '@gamil.com';
-          v_parola:= v_prenume || '123';
-          INSERT INTO client(ID,Nume,Prenume,Email,Parola,Telefon) 
-            VALUES(v_numar_linii, 
-                    v_nume,
-                    v_prenume,        
-                    v_email, 
-                    v_parola, 
-                    v_numar_telefon 
-                  );
-          v_numar_linii:=v_numar_linii+1;
-        END IF;
-      END LOOP;
-    END LOOP;
-  END intro_nume_prenume;
-
-
 
 	PROCEDURE insert_into_client(p_nume in varchar2, p_prenume in varchar2, p_email in varchar2, p_parola in varchar2, p_telefon in varchar2) is
 		new_id client.id%TYPE;
@@ -747,7 +688,128 @@ create or replace package body table_inserts as
 		WHEN OTHERS THEN
 			raise_application_error(-20999, 'Ceva nu a mers bine! INSERT VANZARI');
 	END;
+  
+  --Proceduri auxiliare
+  FUNCTION editare(p_nume IN OUT VARCHAR2) return VARCHAR2 AS
+    v_contor  INTEGER;
+    v_aux_sir VARCHAR2(20):='';
+  BEGIN
+    FOR v_contor IN 1..length(p_nume)LOOP
+      IF(v_contor  = 1) THEN
+        v_aux_sir := v_aux_sir || UPPER(SUBSTR(p_nume,v_contor,1));
+      ELSE
+        v_aux_sir := v_aux_sir || LOWER(SUBSTR(p_nume,v_contor,1));
+      END IF;
+    END LOOP;
+    p_nume:=v_aux_sir;
+    return p_nume;
+  END editare;
+  
+  FUNCTION generare_numar_de_telefon return VARCHAR2 AS
+  v_numar_telefon VARCHAR2(10):='07';
+  BEGIN
+    FOR i IN 1..8
+    LOOP
+      v_numar_telefon := v_numar_telefon || TRUNC(DBMS_RANDOM.VALUE(1,10));
+    END LOOP;
+    return v_numar_telefon;
+  END generare_numar_de_telefon;
+  
+  FUNCTION scaraSiBloc_random RETURN VARCHAR2 AS
+    v_NR_litera NUMBER := TRUNC(DBMS_RANDOM.VALUE(1,29));
+    v_NR_numar  NUMBER := TRUNC(DBMS_RANDOM.VALUE(1,3));
+    v_char VARCHAR2(2);
+  BEGIN
+    v_char := v_char || UPPER(SUBSTR('abcdefghijklmnopqrstuvwxyz',v_NR_litera,1));
+    v_char := v_char || v_NR_numar;
+    return v_char;
+  END scaraSiBloc_random;
+  
+  FUNCTION alegere_strada RETURN VARCHAR2 AS
+    v_nr_elem NUMBER:= TRUNC(DBMS_RANDOM.VALUE(1,25));
+  BEGIN
+    CASE v_nr_elem
+      WHEN 1 THEN RETURN 'Bld. Independentei';
+      WHEN 2 THEN RETURN 'Bld. Dacia';
+      WHEN 3 THEN RETURN 'Str. Mircea cel Batran';
+      WHEN 4 THEN RETURN 'Bld. Stefan cel Mare si Sfant';
+      WHEN 5 THEN RETURN 'Str. Sfantul Andrei';
+      WHEN 6 THEN RETURN 'Alexandru Lapusneanul';
+      WHEN 7 THEN RETURN 'Str. Garii';
+      WHEN 8 THEN RETURN 'Arcu';
+      WHEN 9 THEN RETURN 'Str. Pacurari';
+      WHEN 10 THEN RETURN 'Canta';
+      WHEN 11 THEN RETURN 'Str. Stramosilor';
+      WHEN 12 THEN RETURN 'Aleea Sucidava';
+      WHEN 13 THEN RETURN 'Str. Moara de Vant';
+      WHEN 14 THEN RETURN 'Bld. Tudor Vladimirescu';
+      WHEN 15 THEN RETURN 'C.A. Rosetti';
+      WHEN 16 THEN RETURN 'Cuza Voda';
+      WHEN 18 THEN RETURN 'Str. Sfantul Lazar';
+      WHEN 19 THEN RETURN 'Bld. Primaverii';
+      WHEN 20 THEN RETURN 'Bld. Tutora';
+      WHEN 21 THEN RETURN 'Str. Dimitrie Cantemir';
+      WHEN 22 THEN RETURN 'Sos. Galata';
+      WHEN 23 THEN RETURN 'Sos. Nicolina';
+      ELSE RETURN 'Str. Bucium';
 
+    END CASE; 
+  END alegere_strada;
+  
+  FUNCTION alegere_scara RETURN VARCHAR2 AS
+  v_nr_random NUMBER:= TRUNC(DBMS_RANDOM.VALUE(1,28));
+  v_alfabet VARCHAR2(26):='abcdefghijklmnopqrstuvwxyz';
+  BEGIN
+    return UPPER(SUBSTR(v_alfabet, v_nr_random, 1));
+  END alegere_scara;
+  
+  procedure POPULATE_DATABASE AS
+  v_numar_linii NUMBER := 2;
+  v_nume VARCHAR2(50);
+  v_prenume VARCHAR2(50);
+  v_email VARCHAR2(100);
+  v_parola VARCHAR2(50);
+  v_data_nastere DATE;
+  v_telefon VARCHAR2(10);
+  v_strada VARCHAR2(50);
+  v_numar NUMBER(5);
+  v_bloc VARCHAR2(5);
+  v_scara VARCHAR2(2);
+  v_etaj NUMBER(3);
+  v_apartament NUMBER(5);
+  
+  BEGIN
+  
+    FOR v_contor_nume IN (SELECT n FROM nume)LOOP
+      FOR v_contor_prenume IN (SELECT p FROM prenume)LOOP
+        IF (v_numar_linii<2001) THEN
+          v_prenume     :=editare(v_contor_prenume.p);
+          v_nume        :=editare(v_contor_nume.n);
+          v_data_nastere:=TO_DATE( TRUNC(DBMS_RANDOM.VALUE(TO_CHAR(DATE '1950-01-01','J'),TO_CHAR(DATE '1998-12-31','J') )),'J' );
+          v_telefon := generare_numar_de_telefon;
+          v_bloc:=scaraSiBloc_random();
+          v_scara:=alegere_scara();
+          v_strada:=alegere_strada();
+          APPLICATION_PROCEDURES.inregistrare(
+             v_nume,                                  -- nume              VARCHAR2,
+             v_prenume,                               -- prenume           VARCHAR2,
+             v_nume ||'.'||v_prenume|| '@gmail.com',  -- email             VARCHAR2,
+             v_nume|| '12345',                        -- parola            VARCHAR2,
+             v_nume || '12345',                       -- confirmare_parola VARCHAR2,
+             v_data_nastere,                          -- data_nastere      DATE,
+             v_telefon,                               -- telefon           VARCHAR2,
+             v_strada,                                -- strada            VARCHAR2,
+             TRUNC(DBMS_RANDOM.VALUE(1,80)),         -- numar             NUMBER,
+             v_bloc,                                  -- bloc              VARCHAR2,
+             v_scara,                                 -- scara             VARCHAR2,
+             TRUNC(DBMS_RANDOM.VALUE(1,10)),          -- etaj              NUMBER,
+             TRUNC(DBMS_RANDOM.VALUE(1,50))           -- apartament        NUMBER   
+        );
+      v_numar_linii:=v_numar_linii+1;
+    END IF;
+    END LOOP;
+  END LOOP;
+  END populate_database;
 
 end table_inserts;
 /
@@ -804,7 +866,7 @@ BEGIN
   TABLE_INSERTS.INSERT_INTO_CARD(sysdate,1,50);
   TABLE_INSERTS.INSERT_INTO_ADRESA('Cerna',1,'A31','A',4,1,1);
   
-  TABLE_INSERTS.intro_nume_prenume();
+  TABLE_INSERTS.POPULATE_DATABASE();
   
 EXCEPTION
   WHEN OTHERS THEN
@@ -822,3 +884,8 @@ end;
 /
 commit;
 /
+
+
+--select * from client;
+--select * from adresa;
+--select * from card;
